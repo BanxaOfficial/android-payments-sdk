@@ -1,0 +1,147 @@
+package com.banxa.nativepaymentssdk.core
+
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
+import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.di.ServiceLocator
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
+
+class Banxa private constructor(
+    val apiKey: String,
+    val partner: String,
+    val environment: Environment,
+    val primerSettings: PrimerSettings?
+) {
+
+    companion object {
+        @Volatile
+        private var instance: Banxa? = null
+
+        fun initialize(banxa: Banxa) {
+            instance = banxa
+        }
+
+        fun getInstance(): Banxa {
+            return instance
+                ?: throw IllegalStateException("Banxa is not initialized. Call initialize() first.")
+        }
+    }
+
+
+    class Builder {
+        private var apiKey: String = ""
+        private var partner: String = ""
+        private var environment: Environment = Environment.SANDBOX
+        private var primerSettings: PrimerSettings? = null
+
+        fun apiKey(apiKey: String) = apply { this.apiKey = apiKey }
+        fun partner(partner: String) = apply { this.partner = partner }
+        fun environment(environment: Environment) = apply { this.environment = environment }
+        fun primerSettings(settings: PrimerSettings) = apply { this.primerSettings = settings }
+
+        fun build(): Banxa {
+            ServiceLocator.init()
+            return Banxa(apiKey, partner, environment, primerSettings)
+        }
+    }
+}
+
+
+
+fun RGBA.toColorInt(): Int {
+    return android.graphics.Color.argb(alpha, red, green, blue)
+}
+
+
+enum class Environment {
+    SANDBOX,
+    PRODUCTION
+}
+
+data class PrimerSettings(
+    val uiOptions: UiOptions?
+)
+
+data class UiOptions(
+    val appearanceMode: AppearanceMode = AppearanceMode.LIGHT,
+    val theme: Theme?
+)
+
+enum class AppearanceMode {
+    SYSTEM,
+    LIGHT,
+    DARK
+}
+data class Theme(
+    val colors: Colors,
+    val darkModeColors: Colors?
+)
+
+data class Colors(
+    val mainColor: RGBA,
+    val containerColor: RGBA,
+    val contrastingColor: RGBA,
+    val background: RGBA,
+    val text: RGBA,
+    val contrastingText: RGBA,
+    val borders: RGBA,
+    val disabled: RGBA,
+    val error: RGBA
+)
+
+data class RGBA(
+    val red: Int,
+    val green: Int,
+    val blue: Int,
+    val alpha: Int
+)
+
+
+
+object BanxaSDK {
+    private var instance: Banxa? = null
+    private var test: String = ""
+
+    fun initialize(banxa: Banxa) {
+        instance = banxa
+    }
+    fun initializeTest(test1: String) {
+        test = test1
+    }
+
+    fun get(): Banxa {
+        return instance ?: throw IllegalStateException("BanxaSDK not initialized")
+    }
+}
+
+@Composable
+fun getThemeColors(banxa: Banxa): Colors? {
+    val uiOptions = banxa.primerSettings?.uiOptions
+    val theme = uiOptions?.theme
+
+    val isSystemDark = isSystemInDarkTheme()
+
+    return when (uiOptions?.appearanceMode) {
+
+        AppearanceMode.DARK -> {
+            theme?.darkModeColors ?: theme?.colors
+        }
+
+        AppearanceMode.LIGHT -> {
+            theme?.colors
+        }
+
+        AppearanceMode.SYSTEM -> {
+            if (isSystemDark) {
+                theme?.darkModeColors ?: theme?.colors
+            } else {
+                theme?.colors
+            }
+        }
+        else -> theme?.colors
+    }
+}
+
+
+
