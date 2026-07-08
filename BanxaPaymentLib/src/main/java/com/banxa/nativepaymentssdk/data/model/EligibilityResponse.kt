@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 
 data class EligibilityResponse(
-    @SerializedName("paymentReady")val paymentReady: Boolean,
+    @SerializedName("message")val message: String? = null,
+    @SerializedName("paymentReady")val paymentReady: Boolean = false,
     @SerializedName("kycRequirements")val requirements: List<Any> = emptyList()
 )

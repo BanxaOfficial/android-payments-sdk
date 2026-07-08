@@ -1,18 +1,16 @@
 package com.banxa.nativepaymentssdk.data.repo
 
+import android.util.Log
 import com.banxa.nativepaymentssdk.data.api.BanxaApiService
-import com.banxa.nativepaymentssdk.data.model.BuyRequest
 import com.banxa.nativepaymentssdk.data.model.BuyResponse
-import com.banxa.nativepaymentssdk.data.model.EligibilityRequest
+import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
-import kotlinx.coroutines.delay
-
 
 class BanxaRepository(
     private val api: BanxaApiService
 ) {
     suspend fun checkEligibility(
-        request: EligibilityRequest,
+        request1: CreateBuyOrderRequest,
         partner: String,
         apiKey: String
     ): Result<EligibilityResponse> {
@@ -21,7 +19,7 @@ class BanxaRepository(
                 api.checkEligibility(
                     partner = partner,
                     apiKey = apiKey,
-                    request = request
+                    request = request1
                 )
 
             if (response.isSuccessful) {
@@ -30,14 +28,13 @@ class BanxaRepository(
                 )
 
             } else {
-
                 Result.failure(
-                    Exception("Error ${response.code()}")
+                    Exception("${response.message()}")
                 )
             }
 
         } catch (e: Exception) {
-
+            Log.i("BPS99","catch : ${e.message}")
             Result.failure(e)
         }
     }
@@ -45,7 +42,7 @@ class BanxaRepository(
     suspend fun createOrderAndShowPrimerCheckout(
         partner: String,
         apiKey: String,
-        request: BuyRequest
+        request: CreateBuyOrderRequest
     ): Result<BuyResponse> {
         return try {
             val response =

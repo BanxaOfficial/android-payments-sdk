@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.compose.runtime)
     testImplementation(libs.junit)
+    testImplementation("io.mockk:mockk:1.13.17")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

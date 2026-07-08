@@ -17,11 +17,10 @@
         <activity
             android:name="com.banxa.ui.MainActivity"
             android:exported="true"
-            android:label="@string/title_activity_test_webview_check"
+            android:label="@string/app_name"
             android:theme="@style/Theme.BanxaPaymentSDKNew">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

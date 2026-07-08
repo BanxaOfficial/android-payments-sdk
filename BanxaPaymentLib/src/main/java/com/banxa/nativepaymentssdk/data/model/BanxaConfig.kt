@@ -21,12 +21,6 @@ data class PrimerSettings(
     val paymentMethodOptions: Any? = null
 )
 
-/*data class PrimerCallbacks(
-    val onCheckoutComplete: ((Any?) -> Unit)? = null,
-    val onError: ((PrimerError) -> Unit)? = null,
-    val onDismiss: (() -> Unit)? = null
-)*/
-
 data class PrimerError(
     val description: String? = null
 )

@@ -12,18 +12,3 @@ data class CheckoutWebViewProps(
     val returnUrlOnFailure: String? = null,
     val returnUrlOnCancelled: String? = null
 )
-
-/*   Type Script
-    export interface CheckoutWebViewProps {
-        checkoutUrl: string;
-        visible: boolean;
-        onClose: () => void;
-        onNavigationStateChange?: (navState: any) => void;
-        onSuccess?: (url: string) => void;
-        onFailure?: (url: string) => void;
-        onCancelled?: (url: string) => void;
-        returnUrlOnSuccess?: string;
-        returnUrlOnFailure?: string;
-        returnUrlOnCancelled?: string;
-    }
-*/

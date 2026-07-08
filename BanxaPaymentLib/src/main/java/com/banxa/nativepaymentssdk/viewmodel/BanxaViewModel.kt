@@ -1,12 +1,12 @@
 package com.banxa.nativepaymentssdk.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.banxa.nativepaymentssdk.core.Banxa
-import com.banxa.nativepaymentssdk.data.model.BuyRequest
+import com.banxa.nativepaymentssdk.core.Environment
 import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
-import com.banxa.nativepaymentssdk.data.model.EligibilityRequest
 import com.banxa.nativepaymentssdk.data.repo.BanxaRepository
 import com.banxa.nativepaymentssdk.di.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,18 +34,9 @@ class BanxaViewModel(
         viewModelScope.launch {
             _eligibilityUiState.value =
                 EligibilityUiState.Loading
-            val request = EligibilityRequest(
-                crypto = createBuyOrderRequest.crypto,
-                fiat = createBuyOrderRequest.fiat,
-                walletAddress = createBuyOrderRequest.walletAddress,
-                email = createBuyOrderRequest.email,
-                redirectUrl= createBuyOrderRequest.redirectUrl,
-                fiatAmount= createBuyOrderRequest.fiatAmount,
-                paymentMethodId = createBuyOrderRequest.paymentMethodId
-            )
             try {
                 repository.checkEligibility(
-                    request,
+                    createBuyOrderRequest,
                     Banxa.getInstance().partner,
                     Banxa.getInstance().apiKey
                 )
@@ -61,12 +52,14 @@ class BanxaViewModel(
                         }
                     }
                     .onFailure {
+                        Log.i("BPS99","catch :onFailure1 : ${it.message}")
                         _eligibilityUiState.value =
                             EligibilityUiState.Error(
                                 it.message ?: "Unknown Error"
                             )
                     }
             }catch (e: Exception){
+                Log.i("BPS99","catch :onFailure2")
                 _eligibilityUiState.value =
                     EligibilityUiState.Error(
                         e.message ?: "Unknown Error"
@@ -79,27 +72,11 @@ class BanxaViewModel(
         viewModelScope.launch {
             _buyUiState.value =
                 BuyUiState.Loading
-            val request =
-                BuyRequest(
-                    paymentMethodId = createBuyOrderRequest.paymentMethodId,
-                    crypto = createBuyOrderRequest.crypto,
-                    fiat = createBuyOrderRequest.fiat,
-                    fiatAmount = createBuyOrderRequest.fiatAmount,
-                    walletAddress = createBuyOrderRequest.walletAddress,
-                    walletAddressTag = null,
-                    redirectUrl = createBuyOrderRequest.redirectUrl,
-                    subPartnerId = null,
-                    metadata = null,
-                    externalCustomerId = null,
-                    externalOrderId = null,
-                    discountCode = null,
-                    email = createBuyOrderRequest.email,
-                )
             try {
                 repository.createOrderAndShowPrimerCheckout(
                     partner = Banxa.getInstance().partner,
                     apiKey = Banxa.getInstance().apiKey,
-                    request = request
+                    request = createBuyOrderRequest
                 )
                     .onSuccess {
                         _buyUiState.value = BuyUiState.Success(it)
@@ -117,14 +94,17 @@ class BanxaViewModel(
     }
 }
 
-class BanxaViewModelFactory : ViewModelProvider.Factory {
+class BanxaViewModelFactory(
+    private val baseUrl: String?,
+    private val environment: Environment
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(
         modelClass: Class<T>
     ): T {
 
         val repository =
             BanxaRepository(
-                RetrofitClient.api1
+                RetrofitClient.getApi(baseUrl,environment)
             )
 
         return BanxaViewModel(repository) as T

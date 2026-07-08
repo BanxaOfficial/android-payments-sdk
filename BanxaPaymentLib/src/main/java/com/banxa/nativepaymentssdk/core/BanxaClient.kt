@@ -2,15 +2,15 @@ package com.banxa.nativepaymentssdk.core
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
 import com.banxa.nativepaymentssdk.di.ServiceLocator
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
+import io.primer.checkout.PrimerTheme
 
 class Banxa private constructor(
     val apiKey: String,
     val partner: String,
     val environment: Environment,
+    val baseUrl: String? = null,
+    val primerTheme: PrimerTheme? =null,
     val primerSettings: PrimerSettings?
 ) {
 
@@ -32,17 +32,19 @@ class Banxa private constructor(
     class Builder {
         private var apiKey: String = ""
         private var partner: String = ""
+        private var primerTheme: PrimerTheme? = null
         private var environment: Environment = Environment.SANDBOX
         private var primerSettings: PrimerSettings? = null
 
         fun apiKey(apiKey: String) = apply { this.apiKey = apiKey }
         fun partner(partner: String) = apply { this.partner = partner }
         fun environment(environment: Environment) = apply { this.environment = environment }
+        fun primerTheme(primerTheme: PrimerTheme?) = apply { this.primerTheme = primerTheme }
         fun primerSettings(settings: PrimerSettings) = apply { this.primerSettings = settings }
 
         fun build(): Banxa {
             ServiceLocator.init()
-            return Banxa(apiKey, partner, environment, primerSettings)
+            return Banxa(apiKey= apiKey, partner = partner, environment = environment,primerTheme = primerTheme, primerSettings = primerSettings)
         }
     }
 }
@@ -56,7 +58,9 @@ fun RGBA.toColorInt(): Int {
 
 enum class Environment {
     SANDBOX,
-    PRODUCTION
+    PRODUCTION,
+    PREPROD,
+    LOCAL
 }
 
 data class PrimerSettings(

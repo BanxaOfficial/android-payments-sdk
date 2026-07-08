@@ -45,6 +45,8 @@ android {
 
 dependencies {
     implementation(project(":BanxaPaymentLib"))
+    implementation("io.primer:android:3.0.0-beta.2")
+    implementation("io.primer:checkout:3.0.0-beta.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
