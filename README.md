@@ -81,10 +81,10 @@ Before creating a Buy Order, the SDK validates whether the customer is eligible.
 
 ```kotlin
 viewModel.checkEligibility(request)
-
+```
 ## Step-1 : Configuration
 
-```jetpack compose
+```
 fun getBanxa(): Banxa{
 val primerTheme = PrimerTheme(
         lightColorTokens = object : LightColorTokens() {
@@ -103,7 +103,7 @@ val primerTheme = PrimerTheme(
 ```
 ## Step-2 : Initialize
 
-```jetpack compose
+```
 var banxa = getBanxa()
 Banxa.initialize(banxa)
 ```
