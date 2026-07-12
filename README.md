@@ -23,33 +23,33 @@ A headless Android SDK that lets partners initiate Banxa fiat-to-crypto orders a
 MainActivity
       │
       ▼
+Config Banxa Config
+      │
+      ▼
 Initialize Banxa Client
       │
       ▼
-Create BanxaViewModel
+CreateOrder(Jetpack Composable)
       │
-      ▼
-Check Customer Eligibility
-      │
-      ├── Eligible
+      ├── Eligiblity Check
       │      │
       │      ▼
-      │  Create Buy Order
+      │  Native Token(If Present)
       │      │
       │      ▼
       │ Launch Native Primer Checkout
       │
-      └── Not Eligible / Error
+      └── Native Token(If Not Present)
              │
              ▼
-      Display Validation or Error Message
+      Launch WebView
 ```
 
 ---
 
-## SDK Initialization
+## SDK Configuration
 
-Create a `Banxa` instance using the Builder and initialize the SDK during application or activity startup.
+Create a `Banxa` instance using the Builder and initialize the SDK.
 
 ```kotlin
 val banxa = Banxa.Builder()
@@ -61,23 +61,6 @@ val banxa = Banxa.Builder()
 Banxa.initialize(banxa)
 ```
 ---
-
-## ViewModel
-
-`BanxaViewModel` acts as the entry point for all payment operations. It communicates with `BanxaRepository` to perform network requests and exposes UI states for the application.
-
-Responsibilities:
-
-* Validate customer eligibility
-* Create Buy Order
-* Manage loading, success, and error states
-* Trigger Native Primer Checkout
-
----
-
-## Eligibility Check
-
-Before creating a Buy Order, the SDK validates whether the customer is eligible.
 
 ```kotlin
 viewModel.checkEligibility(request)
