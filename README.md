@@ -60,11 +60,7 @@ val banxa = Banxa.Builder()
 
 Banxa.initialize(banxa)
 ```
----
 
-```kotlin
-viewModel.checkEligibility(request)
-```
 ## Step-1 : Configuration
 
 ```
