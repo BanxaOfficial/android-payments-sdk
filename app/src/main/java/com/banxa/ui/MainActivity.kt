@@ -1,14 +1,12 @@
 package com.banxa.ui
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -31,20 +28,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.banxa.nativepaymentssdk.core.AppearanceMode
 import com.banxa.nativepaymentssdk.core.Banxa
-import com.banxa.nativepaymentssdk.core.Colors
 import com.banxa.nativepaymentssdk.core.Environment
 import com.banxa.nativepaymentssdk.core.PaymentSdkConfig
-import com.banxa.nativepaymentssdk.core.PrimerSettings
-import com.banxa.nativepaymentssdk.core.RGBA
-import com.banxa.nativepaymentssdk.core.Theme
-import com.banxa.nativepaymentssdk.core.UiOptions
 import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
 import com.banxa.nativepaymentssdk.theme.PaymentSdkManager
 import com.banxa.nativepaymentssdk.ui.CreateOrder
@@ -62,41 +52,24 @@ class MainActivity : ComponentActivity() {
                 var showDialog by remember { mutableStateOf(false) }
                 var message = remember { mutableStateOf("") }
                 var paymentData1 = remember { mutableStateOf<PaymentData?>(null) }
-                PaymentSdkManager.initialize(sdkConfig = PaymentSdkConfig(
-                    lightColors = lightColorScheme(background = Color.Black)
-                ))
-                /*Column(
-                    Modifier.fillMaxSize().padding(50.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                PaymentSdkManager.initialize(
+                    sdkConfig = PaymentSdkConfig(
+                        lightColors = lightColorScheme(background = Color.Black)
+                    )
                 )
-                {
-                       Button(
-                            enabled = showBanxa.value.not(),
-                            onClick = {
-                            showBanxa.value = true
-                        }){
-                            Text(if(showBanxa.value) "Buying..." else "Buy with Banxa")
-                        }
-                        if(showBanxa.value){
-                            BuyButtonClickedComposable{
-                                showBanxa.value = false
-                            }
-                        }
-                }*/
-                BanxaPaymentScreen(enable1 = showBanxa.value.not()){
+                BanxaPaymentScreen(enable1 = showBanxa.value.not()) {
                     showBanxa.value = true
                     paymentData1.value = it
                 }
-                if(showBanxa.value){
-                    BuyButtonClickedComposable(paymentData1.value){
+                if (showBanxa.value) {
+                    BuyButtonClickedComposable(paymentData1.value) {
                         message.value = it
                         showBanxa.value = false
                         showDialog = true
                     }
                 }
-                if(showDialog){
-                    TransactionStatusAlert( message.value){
+                if (showDialog) {
+                    TransactionStatusAlert(message.value) {
                         showDialog = false
                     }
                 }
@@ -104,6 +77,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 data class PaymentData(
     val paymentMethodId: String,
     val crypto: String,
@@ -113,21 +87,23 @@ data class PaymentData(
     val email: String,
     val redirectUrl: String
 )
+
 @Composable
 fun BanxaPaymentScreen(
     enable1: Boolean = true,
     onPayClick: (PaymentData) -> Unit
 ) {
-    var paymentMethod by remember { mutableStateOf("google-pay") }//debit-credit-card
-    var crypto by remember { mutableStateOf("ETHH") }
+    var paymentMethod by remember { mutableStateOf("google-pay") }//debit-credit-card,google-pay
+    var crypto by remember { mutableStateOf("ETH") }
     var fiat by remember { mutableStateOf("USD") }
     var amount by remember { mutableStateOf("100") }
-    var walletAddress by remember { mutableStateOf("0x525b287bc1f30dbAEBAcd382C4a4E5795d16De7C") }
-    var email by remember { mutableStateOf("zachary@banxa.com") }
+    var walletAddress by remember { mutableStateOf("<Your-Wallet-Address>") }
+    var email by remember { mutableStateOf("<Your-Email>") }
     var redirectUrl by remember { mutableStateOf("https://banxa.com") }
 
     Column(
-        modifier = Modifier.verticalScroll(rememberScrollState())
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
             .fillMaxSize()
             .background(Color.Black)
             .padding(16.dp),
@@ -171,15 +147,16 @@ fun BanxaPaymentScreen(
                 contentDescription = null
             )*/
             Spacer(modifier = Modifier.width(8.dp))
-            if(enable1) {
+            if (enable1) {
                 Text("Banxa Pay")
-            }else{
+            } else {
                 Text("Paying...")
             }
         }
         Spacer(modifier = Modifier.height(25.dp))
     }
 }
+
 @Composable
 fun BanxaTextField(
     label: String,
@@ -201,7 +178,7 @@ fun BanxaTextField(
                 focusedContainerColor = Color.LightGray,
                 unfocusedContainerColor = Color.LightGray,
                 disabledContainerColor = Color.LightGray
-            ),modifier = Modifier.fillMaxWidth()
+            ), modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -211,9 +188,7 @@ fun BuyButtonClickedComposable(
     paymentData: PaymentData?,
     onActionDone: (String) -> Unit
 ) {
-    Log.i("paymentData", "paymentData: ${paymentData.toString()}")
     var banxa = getBanxa()
-
     Banxa.initialize(banxa)
     paymentData?.let {
         CreateOrder(
@@ -247,32 +222,32 @@ fun BuyButtonClickedComposable(
 }
 
 @Composable
-fun TransactionStatusAlert(message: String,closeDialog: () -> Unit) {
+fun TransactionStatusAlert(message: String, closeDialog: () -> Unit) {
 
-        AlertDialog(
-            onDismissRequest = {
-                closeDialog.invoke()
-            },
-            title = {
-                Text(text = "Alert")
-            },
-            text = {
-                Text(message)
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        closeDialog.invoke()
-                    }
-                ) {
-                    Text("OK")
+    AlertDialog(
+        onDismissRequest = {
+            closeDialog.invoke()
+        },
+        title = {
+            Text(text = "Alert")
+        },
+        text = {
+            Text(message)
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    closeDialog.invoke()
                 }
+            ) {
+                Text("OK")
             }
-        )
+        }
+    )
 
 }
 
-fun getBanxa(): Banxa{
+fun getBanxa(): Banxa {
     val primerTheme = PrimerTheme(
         lightColorTokens = object : LightColorTokens() {
             override val primerColorBrand: Color = Color(0xFF6C5CE7)
@@ -281,41 +256,9 @@ fun getBanxa(): Banxa{
         },
     )
     return Banxa.Builder()
-        .apiKey("cadac59bbd3e45d7652738a24568856167655bff")
-        .partner("demomerchant")
+        .apiKey("<Your-API-Key>")
+        .partner("<Your-Partner-Key>")
         .environment(Environment.SANDBOX)
         .primerTheme(primerTheme)
-        .primerSettings(
-            PrimerSettings(
-                uiOptions = UiOptions(
-                    appearanceMode = AppearanceMode.DARK,
-                    theme = Theme(
-                        colors = Colors(
-                            mainColor = RGBA(1, 255, 1, 255),
-                            contrastingColor = RGBA(23, 196, 200, 255),
-                            background = RGBA(234, 234, 235, 255),
-                            containerColor = RGBA(225, 225, 226, 255),
-                            text = RGBA(17, 22, 48, 255),
-                            contrastingText = RGBA(0, 0, 0, 255),
-                            borders = RGBA(255, 255, 255, 255),
-                            disabled = RGBA(91, 93, 112, 255),
-                            error = RGBA(255, 0, 0, 255)
-                        ),
-
-                        darkModeColors = Colors(
-                            mainColor = RGBA(1, 255, 1, 255),
-                            contrastingColor = RGBA(23, 196, 200, 255),
-                            background = RGBA(26, 31, 56, 255),
-                            containerColor = RGBA(35, 40, 64, 255),
-                            text = RGBA(255, 255, 255, 255),
-                            contrastingText = RGBA(255, 255, 255, 255),
-                            borders = RGBA(255, 255, 255, 255),
-                            disabled = RGBA(91, 93, 112, 255),
-                            error = RGBA(255, 0, 0, 255)
-                        )
-                    )
-                )
-            )
-        )
         .build()
 }
