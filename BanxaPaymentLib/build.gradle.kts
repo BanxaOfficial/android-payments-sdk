@@ -1,10 +1,12 @@
+import com.vanniktech.maven.publish.SonatypeHost
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     id("org.jetbrains.kotlin.plugin.compose")
-
+    id("com.vanniktech.maven.publish") version "0.31.0"
 }
-
+group = "com.banxa.nativepaymentssdk"
+version = "1.0.0"
 android {
     namespace = "com.banxa"
     compileSdk {
@@ -39,6 +41,45 @@ android {
         compose = true
     }
 
+}
+
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    signAllPublications()
+
+    coordinates(
+        "com.banxa.nativepaymentssdk",
+        "sdk",
+        "1.0.0"
+    )
+
+    pom {
+        name.set("SDK For Payments")
+        description.set("Android SDK for payments")
+        url.set("https://github.com/BanxaOfficial/android-payments-sdk")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("<MavenUserID>")
+                name.set("Banxa PaymentSDK")
+                email.set("<MavenUserEmail>")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/BanxaOfficial/android-payments-sdk")
+            connection.set("scm:git:git://github.com/BanxaOfficial/android-payments-sdk.git")
+            developerConnection.set("scm:git:ssh://git@github.com/BanxaOfficial/android-payments-sdk.git")
+        }
+    }
 }
 
 dependencies {
