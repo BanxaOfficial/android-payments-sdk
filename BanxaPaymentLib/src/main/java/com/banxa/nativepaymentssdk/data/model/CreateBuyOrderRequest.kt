@@ -15,10 +15,10 @@ data class CreateBuyOrderRequest(
     val redirectUrl: String,
     val paymentMethodId: String,
     val blockchain: String? = null,
-
     val metadata: String? = null,
     val externalOrderId: String? = null,
     val subPartnerId: String? = null,
     val discountCode: String? = null,
+    val id: String? = null,
     val email: String
 )

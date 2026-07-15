@@ -1,6 +1,5 @@
 package com.banxa.nativepaymentssdk.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -52,14 +51,12 @@ class BanxaViewModel(
                         }
                     }
                     .onFailure {
-                        Log.i("BPS99","catch :onFailure1 : ${it.message}")
                         _eligibilityUiState.value =
                             EligibilityUiState.Error(
                                 it.message ?: "Unknown Error"
                             )
                     }
             }catch (e: Exception){
-                Log.i("BPS99","catch :onFailure2")
                 _eligibilityUiState.value =
                     EligibilityUiState.Error(
                         e.message ?: "Unknown Error"
@@ -92,7 +89,18 @@ class BanxaViewModel(
             }
         }
     }
+
+    fun resetEligibilityState() {
+        _eligibilityUiState.value = EligibilityUiState.Idle
+        _buyUiState.value = BuyUiState.Idle
+    }
+    fun resetBuyState() {
+        _eligibilityUiState.value = EligibilityUiState.Idle
+        _buyUiState.value = BuyUiState.Idle
+    }
 }
+
+
 
 class BanxaViewModelFactory(
     private val baseUrl: String?,

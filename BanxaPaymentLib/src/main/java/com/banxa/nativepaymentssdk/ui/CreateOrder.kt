@@ -30,7 +30,12 @@ fun CreateOrder(
     val buyUiState by viewModel.buyUiState.collectAsState()
 
     LaunchedEffect(Unit) {
-       viewModel.checkEligibility(createBuyOrderRequest)
+        if(banxa.apiKey.isEmpty() || banxa.partner.isEmpty()){
+            onError.invoke("API Key or Partner Key should n't be empty.")
+            return@LaunchedEffect
+        }else{
+            viewModel.checkEligibility(createBuyOrderRequest)
+        }
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -55,7 +60,8 @@ fun CreateOrder(
             is EligibilityUiState.Error -> {
               val message = (eligibilityUiState as EligibilityUiState.Error)
                     .message
-                onError.invoke("Something went wrong from Eligibility API")
+                onError.invoke(message)
+                viewModel.resetEligibilityState()
             }
         }
         /** Update EligibilityUiState [End] **/
@@ -80,29 +86,36 @@ fun CreateOrder(
                         primerTheme = banxa.primerTheme,
                         onSuccessPrimerSDK = {
                             onCheckoutComplete.invoke()
+                            viewModel.resetBuyState()
                         },
                         onFailurePrimerSDK = {
                             onError.invoke("Something went wrong from Primer SDK")
+                            viewModel.resetBuyState()
                         },
                         onDismiss = {
                             onDismiss.invoke()
+                            viewModel.resetBuyState()
                         })
                 } else {
                     ModalBottomSheetWrapper(
                         hideClick = {
                             onDismiss.invoke()
+                            viewModel.resetBuyState()
                         }
                     ) {
                         CheckoutWebViewScreen(
                             url = checkoutUrl,
                             onSuccess = {
                                 onCheckoutComplete.invoke()
+                                viewModel.resetBuyState()
                             },
                             onFailure = {
                                 onError.invoke("Something went wrong from checkout webview")
+                                viewModel.resetBuyState()
                             },
                             onDismiss = {
                                 onDismiss.invoke()
+                                viewModel.resetBuyState()
                             }
                         )
                     }
@@ -111,6 +124,7 @@ fun CreateOrder(
 
             is BuyUiState.Error -> {
                 onError.invoke((buyUiState as BuyUiState.Error).message)
+                viewModel.resetBuyState()
             }
         }
         /** Update BuyUiState [End] **/

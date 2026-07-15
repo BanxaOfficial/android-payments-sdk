@@ -1,10 +1,11 @@
 package com.banxa.nativepaymentssdk.data.repo
 
-import android.util.Log
 import com.banxa.nativepaymentssdk.data.api.BanxaApiService
 import com.banxa.nativepaymentssdk.data.model.BuyResponse
 import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
+import com.banxa.nativepaymentssdk.data.model.ErrorResponse
+import com.google.gson.Gson
 
 class BanxaRepository(
     private val api: BanxaApiService
@@ -14,6 +15,7 @@ class BanxaRepository(
         partner: String,
         apiKey: String
     ): Result<EligibilityResponse> {
+        var statusCode = 0
         return try {
             val response =
                 api.checkEligibility(
@@ -28,14 +30,26 @@ class BanxaRepository(
                 )
 
             } else {
+                var errorBody = response.errorBody()?.string()
+                var errorMsg = ""
+                val gson = Gson()
+                response.errorBody()?.let { error ->
+                    val errorResponse = gson.fromJson(errorBody, ErrorResponse::class.java)
+                    errorMsg = errorResponse.message.toString()
+                    errorResponse.errors?.forEach { (key, value) ->
+                        errorMsg = value.joinToString()
+                    }
+                }
+                statusCode = response.code()
                 Result.failure(
-                    Exception("${response.message()}")
+                    Exception("$statusCode:$errorMsg")
                 )
             }
 
         } catch (e: Exception) {
-            Log.i("BPS99","catch : ${e.message}")
-            Result.failure(e)
+            Result.failure(
+                Exception("500:Server Error")
+            )
         }
     }
 
@@ -58,7 +72,7 @@ class BanxaRepository(
             } else {
                 Result.failure(
                     Exception(
-                        "API Error ${response.code()}"
+                        "${response.code()}"
                     )
                 )
             }

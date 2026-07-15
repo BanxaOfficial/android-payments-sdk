@@ -97,8 +97,8 @@ fun BanxaPaymentScreen(
     var crypto by remember { mutableStateOf("ETH") }
     var fiat by remember { mutableStateOf("USD") }
     var amount by remember { mutableStateOf("100") }
-    var walletAddress by remember { mutableStateOf("<Your-Wallet-Address>") }
-    var email by remember { mutableStateOf("<Your-Email>") }
+    var walletAddress by remember { mutableStateOf("0x525b287bc1f30dbAEBAcd382C4a4E5795d16De7C") }
+    var email by remember { mutableStateOf("zachary@banxa.com") }
     var redirectUrl by remember { mutableStateOf("https://banxa.com") }
 
     Column(
@@ -256,9 +256,9 @@ fun getBanxa(): Banxa {
         },
     )
     return Banxa.Builder()
-        .apiKey("<Your-API-Key>")
-        .partner("<Your-Partner-Key>")
+        .apiKey("cadac59bbd3e45d7652738a24568856167655bff")
+        .partner("demomerchant")
         .environment(Environment.SANDBOX)
-        .primerTheme(primerTheme)
+        //.primerTheme(primerTheme)
         .build()
 }
