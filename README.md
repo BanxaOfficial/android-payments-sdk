@@ -17,106 +17,34 @@ A headless Android SDK that lets partners initiate Banxa fiat-to-crypto orders a
 - Jetpack Compose enabled in your project
 - A Banxa partner account (`apiKey` + `partnerID`).
 
-## SDK Flow
+## Installation
 
-```
-MainActivity
-      │
-      ▼
-Config Banxa Config
-      │
-      ▼
-Initialize Banxa Client
-      │
-      ▼
-CreateOrder(Jetpack Composable)
-      │
-      ├── Eligiblity Check
-      │      │
-      │      ▼
-      │  Native Token(If Present)
-      │      │
-      │      ▼
-      │ Launch Native Primer Checkout
-      │
-      └── Native Token(If Not Present)
-             │
-             ▼
-      Launch WebView
+### Using AAR File
+
+Add banxalib.aar to libs folder:
+
+```build.gradle
+dependencies {
+    implementation(files("libs/BanxaPayment.1.0.0"))
+}
 ```
 
----
+## Configuration & Initialize SDK
 
-## SDK Configuration
+Configure the SDK once, ideally at app launch.
 
+```Jetpack compose
 Create a `Banxa` instance using the Builder and initialize the SDK.
 
 ```kotlin
-val banxa = Banxa.Builder()
-    .apiKey("<API_KEY>")
-    .partner("<PARTNER_NAME>")
+val config = BanxaConfig.Builder()
+    .apiKey("YOUR_BANXA_API_KEY")
+    .partnerID("your-partner-slug")
     .environment(Environment.SANDBOX)
+     //.primerTheme(primerTheme) //optional
     .build()
 
-Banxa.initialize(banxa)
-```
-
-## Step-1 : Configuration
-
-```
-fun getBanxa(): Banxa{
-val primerTheme = PrimerTheme(
-        lightColorTokens = object : LightColorTokens() {
-            override val primerColorBrand: Color = Color(0xFF6C5CE7)
-            override val primerColorTextPrimary: Color = Color(0xFFD32E2E)
-            override val primerColorBackground: Color = Color(0xFF9CFFA1)
-        },
-    )
-    return Banxa.Builder()
-        .apiKey("<Your-API-Key>")
-        .partner("<Your-Partner-Key>")
-        .environment(Environment.SANDBOX)
-        .primerTheme(primerTheme)
-        .build()
-}
-```
-## Step-2 : Initialize
-
-```
-var banxa = getBanxa()
-Banxa.initialize(banxa)
-```
-
-## Step-3 : Create Order
-
-```jetpack compose
-CreateOrder(
-            createBuyOrderRequest = CreateBuyOrderRequest(
-                fiat = your-fiat,
-                crypto = your-crypto,
-                fiatAmount = your-fiatAmount,
-                cryptoAmount = null,
-                walletAddress = your-walletAddress,
-                walletAddressTag = null,
-                redirectUrl = your-redirectUrl,
-                paymentMethodId = your-paymentMethodId,
-                blockchain = null,
-                metadata = null,
-                externalOrderId = null,
-                subPartnerId = null,
-                discountCode = null,
-                email = your-email
-            ),
-            onCheckoutComplete = {
-                
-            },
-            onError = {
-                
-            },
-            onDismiss = {
-               
-            },
-        )
+Banxa.initialize(config)
 ```
 
 ### Environments
@@ -129,13 +57,54 @@ CreateOrder(
 
 The effective API base URL is `<host>/<partnerID>/v2`.
 
+## Starting a Payment
+
+Call Jetpack Compose function for create Order:
+
+```Jetpack Compose
+StartPayment(
+            createOrderRequest = CreateOrderRequest(
+                fiat = your-fiat,
+                crypto = your-crypto,
+                fiatAmount = your-fiatAmount,
+                walletAddress = your-walletAddress,
+                redirectUrl = your-redirectUrl,
+                paymentMethodId = your-paymentMethodId,
+                email = your-email
+            )
+        )
+```
+
+## Handling Callbacks
+
+Jetpack compose function lamda functions to receive both Banxa flow events and forwarded Primer drop-in callbacks. All methods have default no-op implementations — implement only what you need.
+
+```Jetpack Compose
+StartPayment(
+            banxaDidReceiveCheckout = { result ->
+                 // Success — from either the native in-app flow or the internal WebView.
+        		 // Native path populates paymentId / orderId / status.
+                 // WebView path populates rawQuery with the terminal success URL query string.
+                 print("Paid:", result.paymentId ?? result.rawQuery ?? "-")
+            },
+            banxaDidFail = { error ->
+                // Any failure: Banxa API / validation / network / decoding errors,
+        		// in-app checkout errors (card decline, 3DS), or WebView failure URL.
+            },
+            banxaDidDismiss = { 
+               // User closed the checkout UI without completing.
+            }
+)
+```
+
+
 ## Models
 
 ### `CreateOrderRequest`
 
 | Field                | Type     | Required | Notes                                              |
 | -------------------- | -------- | -------- | -------------------------------------------------- |
-| `paymentMethodID`    | String   | Yes      | Banxa payment method id (e.g. `"apple-pay"`).      |
+| `paymentMethodID`    | String   | Yes      | Banxa payment method id (e.g. `"google-pay"`).      |
 | `crypto`             | String   | Yes      | Crypto asset symbol (e.g. `"ETH"`).                |
 | `fiat`               | String   | Yes      | Fiat currency code (e.g. `"EUR"`).                 |
 | `fiatAmount`         | String   | Yes      | Fiat amount as a string.                           |
@@ -152,6 +121,47 @@ The effective API base URL is `<host>/<partnerID>/v2`.
 | `externalOrderID`    | String?  | No       | Partner-side order id.                             |
 | `discountCode`       | String?  | No       | Promo / discount code.                             |
 
+## Example
+
+```Jetpack Compose
+val primerTheme = PrimerTheme(
+        lightColorTokens = object : LightColorTokens() {
+            override val primerColorBrand: Color = Color(0xFF6C5CE7)
+            override val primerColorTextPrimary: Color = Color(0xFFD32E2E)
+            override val primerColorBackground: Color = Color(0xFF9CFFA1)
+        },
+    )
+    val config = BanxaConfig.Builder()
+    .apiKey("YOUR_BANXA_API_KEY")
+    .partnerID("your-partner-slug")
+    .environment(Environment.SANDBOX)
+     //.primerTheme(primerTheme) //optional
+    .build()
+
+Banxa.initialize(config)
+		
+StartPayment(
+            createOrderRequest = CreateOrderRequest(
+                fiat = "EUR",
+                crypto = "ETH",
+                fiatAmount ="40",
+                cryptoAmount = null,
+                walletAddress = "ocx.........",
+                redirectUrl = "demo://banxa-return",
+                paymentMethodId = "debit-credit-card",
+                email = "user@example.com"
+            ),
+            banxaDidReceiveCheckout = { result ->
+                print("Payment complete:", result.paymentId ?? result.rawQuery ?? "-")
+            },
+            banxaDidFail = { error ->
+                print("Payment failed:", error)
+            },
+            banxaDidDismiss = {
+                 print("User dismissed checkout")
+            },
+        )
+```
 
 ## Payment Methods & Supported Fiats
 
