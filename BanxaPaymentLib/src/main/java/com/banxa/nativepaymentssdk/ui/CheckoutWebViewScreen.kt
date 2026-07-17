@@ -49,8 +49,8 @@ import com.banxa.nativepaymentssdk.data.model.CheckoutWebViewState
 fun CheckoutWebViewScreen(
     state: CheckoutWebViewState? = null,
     url: String = "",
-    onSuccess: () -> Unit = {},
-    onFailure: () -> Unit = {},
+    onSuccess: (rawQuery: String) -> Unit = {},
+    onFailure: (rawQuery: String) -> Unit = {},
     onDismiss: () -> Unit ={}
 ) {
     var isLoading by remember { mutableStateOf(true) }
@@ -97,16 +97,16 @@ fun CheckoutWebViewScreen(
                                 val newUrl = request?.url.toString()
 
                                 if(newUrl.contains("/status/")){
-                                    onSuccess.invoke()
+                                    onSuccess.invoke(newUrl)
                                 }
 
                                 if (newUrl.contains("failure")) {
-                                    onFailure.invoke()
+                                    onFailure.invoke(newUrl)
                                     return true
                                 }
 
                                 if (newUrl.contains("/error/")) {
-                                    onFailure.invoke()
+                                    onFailure.invoke(newUrl)
                                     return true
                                 }
                                 return true
@@ -120,10 +120,10 @@ fun CheckoutWebViewScreen(
                                 super.doUpdateVisitedHistory(view, url, isReload)
                                 url?.let {
                                     if(it.contains("/error/")){ //For Error
-                                        onFailure.invoke()
+                                        onFailure.invoke(it)
                                     }
                                     if(it.contains("/status/")){ //For Success
-                                        onSuccess.invoke()
+                                        onSuccess.invoke(it)
                                     }
                                 }
                             }

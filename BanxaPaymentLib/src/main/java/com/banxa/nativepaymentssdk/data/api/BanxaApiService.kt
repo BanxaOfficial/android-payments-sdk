@@ -1,7 +1,7 @@
 package com.banxa.nativepaymentssdk.data.api
 
 import com.banxa.nativepaymentssdk.data.model.BuyResponse
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
 import retrofit2.Response
 import retrofit2.http.Body
@@ -15,14 +15,14 @@ interface BanxaApiService {
     suspend fun checkEligibility(
         @Path("partner") partner: String,
         @Header("x-api-key") apiKey: String,
-        @Body request: CreateBuyOrderRequest
+        @Body request: CreateOrderRequest
     ): Response<EligibilityResponse>
 
     @POST("{partner}/v2/buy")
     suspend fun createBuyOrder(
         @Path("partner") partner: String,
         @Header("x-api-key") apiKey: String,
-        @Body request: CreateBuyOrderRequest
+        @Body request: CreateOrderRequest
     ): Response<BuyResponse>
 
 }

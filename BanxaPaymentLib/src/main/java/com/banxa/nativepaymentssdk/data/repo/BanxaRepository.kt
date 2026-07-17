@@ -2,7 +2,7 @@ package com.banxa.nativepaymentssdk.data.repo
 
 import com.banxa.nativepaymentssdk.data.api.BanxaApiService
 import com.banxa.nativepaymentssdk.data.model.BuyResponse
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
 import com.banxa.nativepaymentssdk.data.model.ErrorResponse
 import com.google.gson.Gson
@@ -11,7 +11,7 @@ class BanxaRepository(
     private val api: BanxaApiService
 ) {
     suspend fun checkEligibility(
-        request1: CreateBuyOrderRequest,
+        request1: CreateOrderRequest,
         partner: String,
         apiKey: String
     ): Result<EligibilityResponse> {
@@ -42,13 +42,13 @@ class BanxaRepository(
                 }
                 statusCode = response.code()
                 Result.failure(
-                    Exception("$statusCode:$errorMsg")
+                    Exception("Validation error : $statusCode - $errorMsg")
                 )
             }
 
         } catch (e: Exception) {
             Result.failure(
-                Exception("500:Server Error")
+                Exception("Validation error : 500 - Server Error")
             )
         }
     }
@@ -56,7 +56,7 @@ class BanxaRepository(
     suspend fun createOrderAndShowPrimerCheckout(
         partner: String,
         apiKey: String,
-        request: CreateBuyOrderRequest
+        request: CreateOrderRequest
     ): Result<BuyResponse> {
         return try {
             val response =

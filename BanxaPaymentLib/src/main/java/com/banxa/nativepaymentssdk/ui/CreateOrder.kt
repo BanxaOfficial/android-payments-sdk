@@ -8,8 +8,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.banxa.nativepaymentssdk.core.Banxa
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.core.BanxaConfig
+import com.banxa.nativepaymentssdk.data.model.BanxaCheckoutResult
+import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.viewmodel.BanxaViewModel
 import com.banxa.nativepaymentssdk.viewmodel.BanxaViewModelFactory
 import com.banxa.nativepaymentssdk.viewmodel.BuyUiState
@@ -17,13 +18,13 @@ import com.banxa.nativepaymentssdk.viewmodel.EligibilityUiState
 import com.valuelabsworkspace.feature_main_entry.presentation.components.ModalBottomSheetWrapper
 
 @Composable
-fun CreateOrder(
-    createBuyOrderRequest: CreateBuyOrderRequest,
-    onCheckoutComplete: () -> Unit = {},
-    onError: (String) -> Unit = {},
-    onDismiss: () -> Unit = {}
+fun StartPayment(
+    createOrderRequest: CreateOrderRequest,
+    banxaDidReceiveCheckout: (BanxaCheckoutResult) -> Unit = {},
+    banxaDidFail: (String) -> Unit = {},
+    banxaDidDismiss: () -> Unit = {}
 ) {
-    val banxa = Banxa.getInstance()
+    val banxa = BanxaConfig.getInstance()
     val viewModel: BanxaViewModel =
         viewModel(factory = BanxaViewModelFactory(banxa.baseUrl, banxa.environment))
     val eligibilityUiState by viewModel.eligibilityUiState.collectAsState()
@@ -31,10 +32,10 @@ fun CreateOrder(
 
     LaunchedEffect(Unit) {
         if(banxa.apiKey.isEmpty() || banxa.partner.isEmpty()){
-            onError.invoke("API Key or Partner Key should n't be empty.")
+            banxaDidFail.invoke("Missing required credentials: apiKey or partnerID")
             return@LaunchedEffect
         }else{
-            viewModel.checkEligibility(createBuyOrderRequest)
+            viewModel.checkEligibility(createOrderRequest)
         }
     }
 
@@ -60,7 +61,7 @@ fun CreateOrder(
             is EligibilityUiState.Error -> {
               val message = (eligibilityUiState as EligibilityUiState.Error)
                     .message
-                onError.invoke(message)
+                banxaDidFail.invoke(message)
                 viewModel.resetEligibilityState()
             }
         }
@@ -85,36 +86,45 @@ fun CreateOrder(
                         nativeToken,
                         primerTheme = banxa.primerTheme,
                         onSuccessPrimerSDK = {
-                            onCheckoutComplete.invoke()
+                            val banxaCheckoutResult = BanxaCheckoutResult(
+                                paymentId = it.payment.id,
+                                orderId = it.payment.orderId,
+                                status = "Success"
+                            )
+                            banxaDidReceiveCheckout.invoke(banxaCheckoutResult)
                             viewModel.resetBuyState()
                         },
                         onFailurePrimerSDK = {
-                            onError.invoke("Something went wrong from Primer SDK")
+                            banxaDidFail.invoke("Something went wrong from Primer SDK")
                             viewModel.resetBuyState()
                         },
                         onDismiss = {
-                            onDismiss.invoke()
+                            banxaDidDismiss.invoke()
                             viewModel.resetBuyState()
                         })
                 } else {
                     ModalBottomSheetWrapper(
                         hideClick = {
-                            onDismiss.invoke()
+                            banxaDidDismiss.invoke()
                             viewModel.resetBuyState()
                         }
                     ) {
                         CheckoutWebViewScreen(
                             url = checkoutUrl,
                             onSuccess = {
-                                onCheckoutComplete.invoke()
+                                val banxaCheckoutResult = BanxaCheckoutResult(
+                                    status = "Success",
+                                    rawQuery = it
+                                )
+                                banxaDidReceiveCheckout.invoke(banxaCheckoutResult)
                                 viewModel.resetBuyState()
                             },
                             onFailure = {
-                                onError.invoke("Something went wrong from checkout webview")
+                                banxaDidFail.invoke("Something went wrong from checkout webview")
                                 viewModel.resetBuyState()
                             },
                             onDismiss = {
-                                onDismiss.invoke()
+                                banxaDidDismiss.invoke()
                                 viewModel.resetBuyState()
                             }
                         )
@@ -123,7 +133,7 @@ fun CreateOrder(
             }
 
             is BuyUiState.Error -> {
-                onError.invoke((buyUiState as BuyUiState.Error).message)
+                banxaDidFail.invoke((buyUiState as BuyUiState.Error).message)
                 viewModel.resetBuyState()
             }
         }

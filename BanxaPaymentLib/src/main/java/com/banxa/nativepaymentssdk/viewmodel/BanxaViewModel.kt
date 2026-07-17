@@ -3,9 +3,9 @@ package com.banxa.nativepaymentssdk.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.banxa.nativepaymentssdk.core.Banxa
+import com.banxa.nativepaymentssdk.core.BanxaConfig
 import com.banxa.nativepaymentssdk.core.Environment
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.data.repo.BanxaRepository
 import com.banxa.nativepaymentssdk.di.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,15 +29,15 @@ class BanxaViewModel(
 
     val buyUiState = _buyUiState.asStateFlow()
 
-    fun checkEligibility(createBuyOrderRequest: CreateBuyOrderRequest) {
+    fun checkEligibility(createBuyOrderRequest: CreateOrderRequest) {
         viewModelScope.launch {
             _eligibilityUiState.value =
                 EligibilityUiState.Loading
             try {
                 repository.checkEligibility(
                     createBuyOrderRequest,
-                    Banxa.getInstance().partner,
-                    Banxa.getInstance().apiKey
+                    BanxaConfig.getInstance().partner,
+                    BanxaConfig.getInstance().apiKey
                 )
                     .onSuccess {
                         if (it.paymentReady) {
@@ -65,14 +65,14 @@ class BanxaViewModel(
         }
     }
 
-    fun createOrder(createBuyOrderRequest: CreateBuyOrderRequest) {
+    fun createOrder(createBuyOrderRequest: CreateOrderRequest) {
         viewModelScope.launch {
             _buyUiState.value =
                 BuyUiState.Loading
             try {
                 repository.createOrderAndShowPrimerCheckout(
-                    partner = Banxa.getInstance().partner,
-                    apiKey = Banxa.getInstance().apiKey,
+                    partner = BanxaConfig.getInstance().partner,
+                    apiKey = BanxaConfig.getInstance().apiKey,
                     request = createBuyOrderRequest
                 )
                     .onSuccess {

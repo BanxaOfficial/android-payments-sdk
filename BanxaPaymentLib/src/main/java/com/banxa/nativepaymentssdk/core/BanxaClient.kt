@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import com.banxa.nativepaymentssdk.di.ServiceLocator
 import io.primer.checkout.PrimerTheme
 
-class Banxa private constructor(
+class BanxaConfig private constructor(
     val apiKey: String,
     val partner: String,
     val environment: Environment,
@@ -16,13 +16,13 @@ class Banxa private constructor(
 
     companion object {
         @Volatile
-        private var instance: Banxa? = null
+        private var instance: BanxaConfig? = null
 
-        fun initialize(banxa: Banxa) {
+        fun initialize(banxa: BanxaConfig) {
             instance = banxa
         }
 
-        fun getInstance(): Banxa {
+        fun getInstance(): BanxaConfig {
             return instance
                 ?: throw IllegalStateException("Banxa is not initialized. Call initialize() first.")
         }
@@ -31,20 +31,20 @@ class Banxa private constructor(
 
     class Builder {
         private var apiKey: String = ""
-        private var partner: String = ""
+        private var partnerID: String = ""
         private var primerTheme: PrimerTheme? = null
         private var environment: Environment = Environment.SANDBOX
         private var primerSettings: PrimerSettings? = null
 
         fun apiKey(apiKey: String) = apply { this.apiKey = apiKey }
-        fun partner(partner: String) = apply { this.partner = partner }
+        fun partnerID(partnerID: String) = apply { this.partnerID = partnerID }
         fun environment(environment: Environment) = apply { this.environment = environment }
         fun primerTheme(primerTheme: PrimerTheme?) = apply { this.primerTheme = primerTheme }
         fun primerSettings(settings: PrimerSettings) = apply { this.primerSettings = settings }
 
-        fun build(): Banxa {
+        fun build(): BanxaConfig {
             ServiceLocator.init()
-            return Banxa(apiKey= apiKey, partner = partner, environment = environment,primerTheme = primerTheme, primerSettings = primerSettings)
+            return BanxaConfig(apiKey= apiKey, partner = partnerID, environment = environment,primerTheme = primerTheme, primerSettings = primerSettings)
         }
     }
 }
@@ -104,23 +104,23 @@ data class RGBA(
 
 
 object BanxaSDK {
-    private var instance: Banxa? = null
+    private var instance: BanxaConfig? = null
     private var test: String = ""
 
-    fun initialize(banxa: Banxa) {
+    fun initialize(banxa: BanxaConfig) {
         instance = banxa
     }
     fun initializeTest(test1: String) {
         test = test1
     }
 
-    fun get(): Banxa {
+    fun get(): BanxaConfig {
         return instance ?: throw IllegalStateException("BanxaSDK not initialized")
     }
 }
 
 @Composable
-fun getThemeColors(banxa: Banxa): Colors? {
+fun getThemeColors(banxa: BanxaConfig): Colors? {
     val uiOptions = banxa.primerSettings?.uiOptions
     val theme = uiOptions?.theme
 

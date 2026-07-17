@@ -1,8 +1,8 @@
 package com.banxa.viewmodel
 
-import com.banxa.nativepaymentssdk.core.Banxa
+import com.banxa.nativepaymentssdk.core.BanxaConfig
 import com.banxa.nativepaymentssdk.core.Environment
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
 import com.banxa.nativepaymentssdk.data.repo.BanxaRepository
 import com.banxa.nativepaymentssdk.viewmodel.BanxaViewModel
@@ -29,10 +29,10 @@ class BanxaViewModelTest {
     fun setup() {
         Dispatchers.setMain(dispatcher)
 
-        Banxa.initialize(
-            Banxa.Builder()
+        BanxaConfig.initialize(
+            BanxaConfig.Builder()
                 .apiKey("apikey")
-                .partner("partner")
+                .partnerID("partner")
                 .environment(Environment.SANDBOX)
                 .build()
         )
@@ -126,7 +126,7 @@ class BanxaViewModelTest {
     }
 
     private fun validRequest() =
-        CreateBuyOrderRequest(
+        CreateOrderRequest(
             externalCustomerId = "customer-123",
             fiat = "USD",
             crypto = "BTC",

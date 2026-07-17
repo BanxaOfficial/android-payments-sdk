@@ -32,12 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.banxa.nativepaymentssdk.core.Banxa
+import com.banxa.nativepaymentssdk.core.BanxaConfig
 import com.banxa.nativepaymentssdk.core.Environment
 import com.banxa.nativepaymentssdk.core.PaymentSdkConfig
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.theme.PaymentSdkManager
-import com.banxa.nativepaymentssdk.ui.CreateOrder
+import com.banxa.nativepaymentssdk.ui.StartPayment
 import com.banxa.ui.theme.BanxaPaymentSDKNewTheme
 import io.primer.checkout.PrimerTheme
 import io.primer.checkout.internal.tokens.LightColorTokens
@@ -189,32 +189,25 @@ fun BuyButtonClickedComposable(
     onActionDone: (String) -> Unit
 ) {
     var banxa = getBanxa()
-    Banxa.initialize(banxa)
+    BanxaConfig.initialize(banxa)
     paymentData?.let {
-        CreateOrder(
-            createBuyOrderRequest = CreateBuyOrderRequest(
+        StartPayment(
+            createOrderRequest = CreateOrderRequest(
                 fiat = paymentData.fiat,
                 crypto = paymentData.crypto,
                 fiatAmount = paymentData.fiatAmount,
-                cryptoAmount = null,
                 walletAddress = paymentData.walletAddress,
-                walletAddressTag = null,
                 redirectUrl = paymentData.redirectUrl,
                 paymentMethodId = paymentData.paymentMethodId,
-                blockchain = null,
-                metadata = null,
-                externalOrderId = null,
-                subPartnerId = null,
-                discountCode = null,
                 email = paymentData.email
             ),
-            onCheckoutComplete = {
+            banxaDidReceiveCheckout = {
                 onActionDone.invoke("Checkout Completed.")
             },
-            onError = {
+            banxaDidFail = {
                 onActionDone.invoke(it)
             },
-            onDismiss = {
+            banxaDidDismiss = {
                 onActionDone.invoke("onDismiss Called")
             },
         )
@@ -247,7 +240,7 @@ fun TransactionStatusAlert(message: String, closeDialog: () -> Unit) {
 
 }
 
-fun getBanxa(): Banxa {
+fun getBanxa(): BanxaConfig {
     val primerTheme = PrimerTheme(
         lightColorTokens = object : LightColorTokens() {
             override val primerColorBrand: Color = Color(0xFF6C5CE7)
@@ -255,9 +248,9 @@ fun getBanxa(): Banxa {
             override val primerColorBackground: Color = Color(0xFF9CFFA1)
         },
     )
-    return Banxa.Builder()
+    return BanxaConfig.Builder()
         .apiKey("cadac59bbd3e45d7652738a24568856167655bff")
-        .partner("demomerchant")
+        .partnerID("demomerchant")
         .environment(Environment.SANDBOX)
         //.primerTheme(primerTheme)
         .build()

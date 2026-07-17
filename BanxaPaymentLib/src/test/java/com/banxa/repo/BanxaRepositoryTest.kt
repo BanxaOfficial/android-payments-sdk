@@ -2,7 +2,7 @@ package com.banxa.repo
 
 import com.banxa.nativepaymentssdk.data.api.BanxaApiService
 import com.banxa.nativepaymentssdk.data.model.BuyResponse
-import com.banxa.nativepaymentssdk.data.model.CreateBuyOrderRequest
+import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
 import com.banxa.nativepaymentssdk.data.repo.BanxaRepository
 import io.mockk.coEvery
@@ -158,7 +158,7 @@ class BanxaRepositoryTest {
     }
 
     private fun eligibilityRequest() =
-        CreateBuyOrderRequest(
+        CreateOrderRequest(
             crypto = "BTC",
             fiat = "USD",
             fiatAmount = "100",
@@ -169,7 +169,7 @@ class BanxaRepositoryTest {
         )
 
     private fun buyRequest() =
-        CreateBuyOrderRequest(
+        CreateOrderRequest(
             externalCustomerId = "customer-123",
             fiat = "USD",
             crypto = "BTC",

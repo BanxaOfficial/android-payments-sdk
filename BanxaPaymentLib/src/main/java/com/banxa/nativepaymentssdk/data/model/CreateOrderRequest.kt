@@ -4,7 +4,7 @@ package com.banxa.nativepaymentssdk.data.model
 // Order API Types
 /** Request body for POST /buy. Either fiatAmount or cryptoAmount must be provided. */
 
-data class CreateBuyOrderRequest(
+data class CreateOrderRequest(
     val externalCustomerId: String? = null,
     val fiat: String,
     val crypto: String,
