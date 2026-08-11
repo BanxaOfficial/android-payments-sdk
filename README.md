@@ -57,6 +57,213 @@ Banxa.initialize(config)
 
 The effective API base URL is `<host>/<partnerID>/v2`.
 
+## Configuration Endpoints
+
+Use these endpoints to populate payment method selectors and currency pickers at runtime instead of hardcoding values.
+
+### Payment Methods
+
+`GET /{partner}/v2/payment-methods/{orderType}`
+
+Retrieves supported payment methods for `buy` or `sell`. Optionally filter with `?fiat=USD`.
+
+```kotlin
+val repository = BanxaRepository(
+    RetrofitClient.getApi(config.baseUrl, config.environment)
+)
+
+val result = repository.getPaymentMethods(
+    partner = config.partner,
+    apiKey = config.apiKey,
+    orderType = "buy",
+    fiat = "USD" // optional
+)
+
+result.onSuccess { methods ->
+    methods.forEach { method ->
+        println("${method.id}: ${method.name} → ${method.supportedFiats}")
+    }
+}
+```
+
+#### `PaymentMethod`
+
+| Field            | Type          | Notes                                              |
+| ---------------- | ------------- | -------------------------------------------------- |
+| `id`             | String        | Payment method id (e.g. `"apple-pay"`).            |
+| `name`           | String        | Display name.                                      |
+| `description`    | String?       | Human-readable description.                        |
+| `supportedFiats` | List\<String> | Fiat codes available for this method.              |
+
+### Countries
+
+`GET /{partner}/v2/countries`
+
+Retrieves supported countries for KYC and transaction flows. The list is the same for buy and sell.
+
+```kotlin
+val result = repository.getCountries(
+    partner = config.partner,
+    apiKey = config.apiKey
+)
+
+result.onSuccess { countries ->
+    countries.forEach { country ->
+        println("${country.id}: ${country.description}")
+        country.states.forEach { state ->
+            println("  ${state.id}: ${state.description}")
+        }
+    }
+}
+```
+
+#### `Country`
+
+| Field         | Type                 | Notes                                         |
+| ------------- | -------------------- | --------------------------------------------- |
+| `id`          | String               | Two-letter ISO country code (e.g. `"US"`).    |
+| `description` | String               | Human-readable country name.                  |
+| `states`      | List\<CountryState>  | States/provinces when applicable; else empty. |
+
+#### `CountryState`
+
+| Field         | Type   | Notes                                      |
+| ------------- | ------ | ------------------------------------------ |
+| `id`          | String | State/province code (e.g. `"AL"`).         |
+| `description` | String | Human-readable state/province name.        |
+
+### Fiats
+
+`GET /{partner}/v2/fiats/{orderType}`
+
+Retrieves supported fiat currencies for `buy` or `sell`, including payment-method min/max limits.
+
+```kotlin
+val result = repository.getFiats(
+    partner = config.partner,
+    apiKey = config.apiKey,
+    orderType = "buy"
+)
+
+result.onSuccess { fiats ->
+    fiats.forEach { fiat ->
+        println("${fiat.id} (${fiat.symbol}): ${fiat.description}")
+    }
+}
+```
+
+#### `Fiat`
+
+| Field                     | Type                      | Notes                                      |
+| ------------------------- | ------------------------- | ------------------------------------------ |
+| `id`                      | String                    | ISO 4217 code (e.g. `"USD"`).              |
+| `description`             | String                    | Human-readable currency name.              |
+| `symbol`                  | String?                   | Currency symbol (e.g. `"$"`).              |
+| `supportedPaymentMethods` | List\<FiatPaymentMethod>  | Available methods and amount limits.       |
+
+#### `FiatPaymentMethod`
+
+| Field     | Type    | Notes                                         |
+| --------- | ------- | --------------------------------------------- |
+| `id`      | String  | Payment method id (e.g. `"debit-credit-card"`). |
+| `name`    | String  | Display name.                                 |
+| `minimum` | String? | Minimum amount for this method.               |
+| `maximum` | String? | Maximum amount for this method.               |
+
+### Cryptocurrencies
+
+`GET /{partner}/v2/crypto/{orderType}`
+
+Retrieves supported cryptocurrencies and their blockchain networks for `buy` or `sell`.
+
+```kotlin
+val result = repository.getCrypto(
+    partner = config.partner,
+    apiKey = config.apiKey,
+    orderType = "buy"
+)
+
+result.onSuccess { cryptos ->
+    cryptos.forEach { crypto ->
+        println("${crypto.id}: ${crypto.description}")
+        crypto.blockchains.forEach { chain ->
+            println("  ${chain.id} (default=${chain.isDefaultBlockchain})")
+        }
+    }
+}
+```
+
+#### `Crypto`
+
+| Field         | Type              | Notes                                |
+| ------------- | ----------------- | ------------------------------------ |
+| `id`          | String            | Asset symbol (e.g. `"ETH"`).         |
+| `description` | String            | Human-readable asset name.           |
+| `blockchains` | List\<Blockchain> | Networks this asset is available on. |
+
+#### `Blockchain`
+
+| Field                  | Type                        | Notes                                                      |
+| ---------------------- | --------------------------- | ---------------------------------------------------------- |
+| `id`                   | String                      | Network id (e.g. `"ETH"`).                                 |
+| `description`          | String                      | Human-readable network name.                               |
+| `isDefaultBlockchain`  | Boolean                     | Whether this is the default network for the asset.         |
+| `address`              | String?                     | Contract address when applicable.                          |
+| `network`              | String?                     | Network identifier (e.g. chain id).                        |
+| `minimum`              | String?                     | Minimum amount for this network.                           |
+| `unsupportedCountries` | Map\<String, List\<String>> | Country code → restricted state codes (empty = whole country). |
+
+### Prices (Quotes)
+
+`GET /{partner}/v2/quotes/{orderType}`
+
+Retrieves a live price quote for a fiat/crypto/payment-method combination. Call immediately before showing a price — do not cache. Either `fiatAmount` or `cryptoAmount` must be provided.
+
+```kotlin
+val result = repository.getQuote(
+    partner = config.partner,
+    apiKey = config.apiKey,
+    orderType = "buy",
+    request = QuoteRequest(
+        fiat = "AUD",
+        crypto = "ETH",
+        blockchain = "ETH",
+        paymentMethodId = "debit-credit-card",
+        fiatAmount = "200"
+    )
+)
+
+result.onSuccess { quote ->
+    println("Pay ${quote.fiatAmount}, receive ${quote.cryptoAmount}")
+    println("Fees: processing=${quote.processingFee}, network=${quote.networkFee}")
+}
+```
+
+#### `QuoteRequest`
+
+| Field                | Type    | Required | Notes                                              |
+| -------------------- | ------- | -------- | -------------------------------------------------- |
+| `fiat`               | String  | Yes      | Fiat currency code (e.g. `"AUD"`).                 |
+| `crypto`             | String  | Yes      | Crypto asset symbol (e.g. `"ETH"`).                |
+| `blockchain`         | String  | Yes      | Blockchain network (e.g. `"ETH"`).                 |
+| `paymentMethodId`    | String  | Yes      | Payment method id (e.g. `"debit-credit-card"`).    |
+| `fiatAmount`         | String? | Cond.    | Fiat amount to spend. Provide this or `cryptoAmount`. |
+| `cryptoAmount`       | String? | Cond.    | Crypto amount to receive. Provide this or `fiatAmount`. |
+| `externalCustomerId` | String? | No       | Partner customer id for more accurate pricing.     |
+| `ipAddress`          | String? | No       | Customer IP for regional pricing.                  |
+| `discountCode`       | String? | No       | Promo / discount code.                             |
+
+#### `Quote`
+
+| Field             | Type           | Notes                                      |
+| ----------------- | -------------- | ------------------------------------------ |
+| `paymentMethodId` | String         | Payment method the quote applies to.       |
+| `cryptoAmount`    | String         | Crypto amount the customer will receive.   |
+| `fiatAmount`      | String         | Fiat amount the customer will spend.       |
+| `processingFee`   | String?        | Banxa processing fee in fiat.              |
+| `networkFee`      | String?        | Blockchain network fee in fiat.            |
+| `discount`        | QuoteDiscount? | Present when a discount code was applied.  |
+
 ## Starting a Payment
 
 Call Jetpack Compose function for create Order:
@@ -164,6 +371,8 @@ StartPayment(
 ```
 
 ## Payment Methods & Supported Fiats
+
+Availability varies by partner, region, and order type. Prefer `getPaymentMethods` at runtime as the source of truth. The table below is a static reference only:
 
 | Payment Method ID | Supported Fiats |
 |-------------------|----------------|

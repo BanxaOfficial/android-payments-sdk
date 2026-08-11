@@ -20,5 +20,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "BanxaPaymentSDKNew"
-include(":app")
 include(":BanxaPaymentLib")
