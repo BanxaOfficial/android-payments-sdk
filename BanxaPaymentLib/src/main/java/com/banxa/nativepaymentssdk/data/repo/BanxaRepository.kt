@@ -3,11 +3,13 @@ package com.banxa.nativepaymentssdk.data.repo
 import com.banxa.nativepaymentssdk.data.api.BanxaApiService
 import com.banxa.nativepaymentssdk.data.model.BuyResponse
 import com.banxa.nativepaymentssdk.data.model.Country
+import com.banxa.nativepaymentssdk.data.model.CreateKycSessionRequest
 import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.data.model.Crypto
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
 import com.banxa.nativepaymentssdk.data.model.ErrorResponse
 import com.banxa.nativepaymentssdk.data.model.Fiat
+import com.banxa.nativepaymentssdk.data.model.KycSession
 import com.banxa.nativepaymentssdk.data.model.PaymentMethod
 import com.banxa.nativepaymentssdk.data.model.Quote
 import com.banxa.nativepaymentssdk.data.model.QuoteRequest
@@ -203,6 +205,43 @@ class BanxaRepository(
                     Result.success(body)
                 } else {
                     Result.failure(Exception("Empty quote response"))
+                }
+            } else {
+                Result.failure(Exception("${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Creates a hosted KYC session, so a customer can be verified before any order exists.
+     *
+     * @param partner
+     * @param apiKey
+     * @param request
+     * @return
+     */
+    suspend fun createKycSession(
+        partner: String,
+        apiKey: String,
+        request: CreateKycSessionRequest
+    ): Result<KycSession> {
+        return try {
+            val response =
+                api.createKycSession(
+                    partner = partner,
+                    apiKey = apiKey,
+                    request = request
+                )
+            if (response.isSuccessful) {
+                val body = response.body()
+                // Gson fills a missing field with null even though the type says otherwise.
+                val redirectUrl: String? = body?.redirectUrl
+                if (body == null || redirectUrl.isNullOrBlank()) {
+                    Result.failure(Exception("Empty KYC session response"))
+                } else {
+                    Result.success(body)
                 }
             } else {
                 Result.failure(Exception("${response.code()}"))
