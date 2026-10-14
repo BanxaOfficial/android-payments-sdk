@@ -2,10 +2,12 @@ package com.banxa.nativepaymentssdk.data.api
 
 import com.banxa.nativepaymentssdk.data.model.BuyResponse
 import com.banxa.nativepaymentssdk.data.model.Country
+import com.banxa.nativepaymentssdk.data.model.CreateKycSessionRequest
 import com.banxa.nativepaymentssdk.data.model.CreateOrderRequest
 import com.banxa.nativepaymentssdk.data.model.Crypto
 import com.banxa.nativepaymentssdk.data.model.EligibilityResponse
 import com.banxa.nativepaymentssdk.data.model.Fiat
+import com.banxa.nativepaymentssdk.data.model.KycSession
 import com.banxa.nativepaymentssdk.data.model.PaymentMethod
 import com.banxa.nativepaymentssdk.data.model.Quote
 import retrofit2.Response
@@ -76,4 +78,18 @@ interface BanxaApiService {
         @Query("discountCode") discountCode: String? = null
     ): Response<Quote>
 
+    /**
+     * Creates a hosted KYC session.
+     *
+     * @param partner
+     * @param apiKey
+     * @param request
+     * @return
+     */
+    @POST("{partner}/v2/kyc/sessions")
+    suspend fun createKycSession(
+        @Path("partner") partner: String,
+        @Header("x-api-key") apiKey: String,
+        @Body request: CreateKycSessionRequest
+    ): Response<KycSession>
 }
