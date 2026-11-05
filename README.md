@@ -304,6 +304,83 @@ StartPayment(
 )
 ```
 
+## Hosted KYC
+
+If you don't run your own KYC, you can send a customer through Banxa's hosted verification before they place any order. This takes two steps: create a session, then show it with `StartKyc`.
+
+### 1. Create a session
+
+We recommend creating the session on your **backend** and sending its two fields to the app, so your API key never ships with the app:
+
+```
+POST https://api.banxa-sandbox.com/{partner}/v2/kyc/sessions
+x-api-key: YOUR_BANXA_API_KEY
+
+{ "externalCustomerId": "customer-42", "returnUrl": "myapp://kyc-return" }
+```
+
+```json
+{ "redirectUrl": "https://…", "expiresAt": "2026-09-23T11:00:00+00:00" }
+```
+
+You can also create it from the app, which ships your API key with it:
+
+```kotlin
+val repository = BanxaRepository(RetrofitClient.getApi(config.baseUrl, config.environment))
+
+repository.createKycSession(
+    partner = config.partner,
+    apiKey = config.apiKey,
+    request = CreateKycSessionRequest(
+        externalCustomerId = "customer-42",
+        tier = KycTier.STANDARD,       // optional, defaults to standard
+        country = "AU",                // optional
+        returnUrl = "myapp://kyc-return" // optional, an https URL or a deep link
+    )
+).onSuccess { session -> /* show it */ }
+ .onFailure { error -> /* error.message is the HTTP status, e.g. "403" */ }
+```
+
+- Sessions are idempotent per customer for 1 hour, so a retry returns the same link.
+- `403` means hosted KYC isn't enabled for your account. `502` is temporary, so retry.
+- `KycTier.EXPRESS` is accepted but isn't binding yet.
+
+### 2. Show the flow
+
+```kotlin
+StartKyc(
+    session = KycSession(redirectUrl, expiresAt), // or the session returned by createKycSession
+    returnUrl = "myapp://kyc-return",             // the same returnUrl the session was created with
+    banxaDidCompleteKyc = { result ->
+        // The customer finished the flow. result.channel says whether we heard it from the page or the return URL.
+    },
+    banxaKycDidFail = { error ->
+        // BanxaKycError: SessionExpired, InvalidSessionUrl, MissingPermissionDeclaration, PermissionDenied, FlowError
+    },
+    banxaDidDismissKyc = {
+        // The customer closed the sheet before finishing.
+    }
+)
+```
+
+`banxaDidCompleteKyc` means the customer **finished** the flow, not that they passed. Banxa sends the verification outcome to your **webhook**. There is no endpoint to poll.
+
+Pass `returnUrl` whenever the session has one. The SDK catches the redirect to it inside the sheet, which is how completion reaches the app for merchants without embedded messaging.
+
+### Camera permissions
+
+The flow captures identity documents and a liveness video, so add these to **your app's** `AndroidManifest.xml`. The SDK doesn't declare them itself, so apps that don't use KYC aren't affected.
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-feature android:name="android.hardware.camera" android:required="false" />
+```
+
+The SDK asks the customer for the runtime permission when the page needs the camera. If either declaration is missing, `StartKyc` doesn't open and reports `BanxaKycError.MissingPermissionDeclaration`.
+
+If you install the SDK as an AAR file, also add `implementation("androidx.webkit:webkit:1.17.1")`. An AAR doesn't bring its dependencies with it.
+
 
 ## Models
 
